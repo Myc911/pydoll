@@ -845,9 +845,10 @@ class TestWebElementHumanizedClick:
             'result': {'model': {'content': bounds}}
         }
 
-        await element_with_mouse.click(humanize=True)
+        humanize = True
+        await element_with_mouse.click(humanize=humanize)
 
-        mouse_mock.click.assert_called_once_with(50.0, 50.0)
+        mouse_mock.click.assert_called_once_with(50.0, 50.0, humanize=humanize)
 
     @pytest.mark.asyncio
     async def test_click_humanized_with_offset(self, element_with_mouse, mouse_mock):
@@ -859,9 +860,10 @@ class TestWebElementHumanizedClick:
             'result': {'model': {'content': bounds}}
         }
 
-        await element_with_mouse.click(x_offset=10, y_offset=20, humanize=True)
+        humanize = True
+        await element_with_mouse.click(x_offset=10, y_offset=20, humanize=humanize)
 
-        mouse_mock.click.assert_called_once_with(60.0, 70.0)
+        mouse_mock.click.assert_called_once_with(60.0, 70.0, humanize=humanize)
 
     @pytest.mark.asyncio
     async def test_click_humanize_false_uses_raw_cdp(self, element_with_mouse, mouse_mock):
