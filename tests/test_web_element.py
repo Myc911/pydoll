@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
 
 from pydoll.browser.options import ChromiumOptions as Options
 from pydoll.browser.chromium.chrome import Chrome
@@ -22,8 +21,8 @@ from pydoll.protocol.input.types import KeyModifier
 from pydoll.protocol.runtime.types import CallArgument
 
 
-@pytest_asyncio.fixture
-async def mock_connection_handler():
+@pytest.fixture
+def mock_connection_handler():
     """Mock connection handler for WebElement tests."""
     with patch('pydoll.connection.ConnectionHandler', autospec=True) as mock:
         handler = mock.return_value
@@ -2019,7 +2018,6 @@ including:
 """
 
 import pytest
-import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 
 from pydoll.elements.web_element import WebElement
@@ -2028,8 +2026,8 @@ from pydoll.connection import ConnectionHandler
 from pydoll.exceptions import InvalidIFrame
 
 
-@pytest_asyncio.fixture
-async def mock_connection_handler():
+@pytest.fixture
+def mock_connection_handler():
     """Mock connection handler for WebElement tests."""
     with patch('pydoll.connection.ConnectionHandler', autospec=True) as mock:
         handler = mock.return_value
