@@ -605,7 +605,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             logger.info(
                 f'Clicking element (humanized): x={position_to_click[0]}, y={position_to_click[1]}'
             )
-            await self._mouse.click(position_to_click[0], position_to_click[1])
+            await self._mouse.click(position_to_click[0], position_to_click[1], humanize=True)
             return
 
         logger.info(
