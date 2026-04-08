@@ -408,6 +408,11 @@ class Request:
         """Build Response object from fetch result."""
         result_value = result['result']['result']['value']
         logger.debug(f'Building response: result_value={result_value}')
+
+        # Check if JavaScript fetch reported an error (CORS, network failure, etc.)
+        if 'error' in result_value:
+            raise HTTPError(f'Fetch error: {result_value["error"]}')
+
         return Response(
             status_code=result_value['status'],
             content=bytes(result_value.get('content', b'')),
