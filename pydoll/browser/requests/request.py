@@ -152,7 +152,6 @@ class Request:
             logger.error(f'Request failed: {exc}')
             raise HTTPError(f'Request failed: {str(exc)}') from exc
         else:
-            # Check for JS fetch error (runs only if try succeeded)
             result_value = result['result']['result']['value']
             if 'error' in result_value:
                 raise HTTPError(f'Fetch error: {result_value["error"]}')
