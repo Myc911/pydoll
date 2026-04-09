@@ -1,5 +1,6 @@
 import asyncio
 import json
+from contextlib import suppress
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -378,6 +379,8 @@ async def test_single_receiver_task_created(connection_handler_closed):
 
     assert connection_handler_closed._receive_task is first_task
     first_task.cancel()
+    with suppress(asyncio.CancelledError):
+        await first_task
 
 
 @pytest.mark.asyncio
