@@ -921,8 +921,6 @@ class FindElementsMixin:
             list[WebElement]: List of family WebElement objects that share the same
                 parent as this element and match the tag filter criteria.
         """
-        from pydoll.protocol.runtime.methods import GetPropertiesResponse
-
         # Fallback to direct evaluate if execute_script is not locally defined
         if hasattr(self, 'execute_script'):
             result = await self.execute_script(  # type: ignore

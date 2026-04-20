@@ -130,12 +130,14 @@ class ShadowRoot(FindElementsMixin):
             list[WebElement]: List of sibling WebElement objects matching criteria.
         """
         logger.debug(f'Getting shadow siblings: tag_filter={tag_filter}, raise_exc={raise_exc}')
-        siblings = await self._get_family_elements(
-            script=Scripts.GET_SIBLINGS_NODE, tag_filter=tag_filter
+        if not self._host_element:
+            logger.warning('get_siblings_elements called on ShadowRoot without host_element reference')
+            return []
+
+        siblings = await self._host_element.get_siblings_elements(
+            tag_filter=tag_filter, raise_exc=raise_exc
         )
-        if not siblings and raise_exc:
-            raise ElementNotFound(f'Sibling element not found for shadow root: {self}')
-        logger.debug(f'Shadow siblings found: {len(siblings)}')
+        logger.debug(f'Shadow siblings (via host) found: {len(siblings)}')
         return siblings
 
     def __repr__(self) -> str:

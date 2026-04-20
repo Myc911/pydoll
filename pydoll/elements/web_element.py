@@ -66,7 +66,6 @@ if TYPE_CHECKING:
     )
     from pydoll.protocol.dom.types import Quad
     from pydoll.protocol.page.methods import CaptureScreenshotResponse
-    from pydoll.protocol.runtime.methods import GetPropertiesResponse
 
 logger = logging.getLogger(__name__)
 
@@ -965,7 +964,6 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 return_by_value=True,
             )
         )
-
 
     def _def_attributes(self, attributes_list: list[str]):
         """Process flat attribute list into dictionary (renames 'class' to 'class_name')."""
