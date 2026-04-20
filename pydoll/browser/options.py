@@ -1,3 +1,4 @@
+import logging
 from contextlib import suppress
 
 from pydoll.browser.interfaces import Options
@@ -7,6 +8,8 @@ from pydoll.exceptions import (
     ArgumentNotFoundInOptions,
     WrongPrefsDict,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ChromiumOptions(Options):
@@ -105,7 +108,7 @@ class ChromiumOptions(Options):
         if argument not in self._arguments:
             self._arguments.append(argument)
         else:
-            raise ArgumentAlreadyExistsInOptions(f'Argument already exists: {argument}')
+            logger.debug(f'Argument already exists: {argument}')
 
     def remove_argument(self, argument: str):
         """
