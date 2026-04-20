@@ -108,7 +108,7 @@ class ChromiumOptions(Options):
         if argument not in self._arguments:
             self._arguments.append(argument)
         else:
-            logger.debug(f'Argument already exists: {argument}')
+            raise ArgumentAlreadyExistsInOptions(f'Argument already exists: {argument}')
 
     def remove_argument(self, argument: str):
         """

@@ -169,7 +169,7 @@ class HarReplayer:
             har_index_json=json.dumps(har_index, ensure_ascii=False)
         )
 
-        result = await self._tab._execute_command(
+        result: dict[str, Any] = await self._tab._execute_command(
             PageCommands.add_script_to_evaluate_on_new_document(
                 source=script_source,
                 run_immediately=True,
@@ -177,7 +177,7 @@ class HarReplayer:
         )
         self._script_identifier = result.get('result', {}).get('identifier')
 
-        eval_result = await self._tab._execute_command(
+        eval_result: dict[str, Any] = await self._tab._execute_command(
             RuntimeCommands.evaluate(
                 expression=script_source,
                 await_promise=True,
