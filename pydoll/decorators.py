@@ -1,12 +1,109 @@
 import asyncio
 import logging
 import traceback
+from datetime import datetime
 from functools import wraps
+from pathlib import Path
 from typing import Any, Callable, Coroutine, List, Optional, Type, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
+
+
+def debug_snapshot(save_dir: Union[str, Path] = 'debug_snapshots'):
+    """
+    Decorator to capture a debug snapshot (MHTML, HAR, and traceback) on failure.
+
+    This decorator identifies the browser 'Tab' instance from the decorated function's
+    arguments and automates the capture of the current page state if an exception occurs.
+
+    Args:
+        save_dir (Union[str, Path]): Directory where snapshots will be saved.
+
+    Usage:
+        @debug_snapshot()
+        async def my_scraping_task(tab: Tab):
+            await tab.go_to("https://example.com")
+            # If this fails, a snapshot folder will be created.
+    """
+
+    def decorator(
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
+        @wraps(func)
+        async def wrapper(*args: Any, **kwargs: Any) -> T:
+            # Try to find a Tab instance in args or kwargs
+            from pydoll.browser.tab import Tab
+
+            tab: Optional[Tab] = None
+
+            # Check args
+            for arg in args:
+                if isinstance(arg, Tab):
+                    tab = arg
+                    break
+                if hasattr(arg, 'tab') and isinstance(arg.tab, Tab):
+                    tab = arg.tab
+                    break
+                if hasattr(arg, 'browser') and isinstance(arg.browser, Tab):
+                    tab = arg.browser
+                    break
+
+            # Check kwargs if not found in args
+            if not tab:
+                for val in kwargs.values():
+                    if isinstance(val, Tab):
+                        tab = val
+                        break
+                    if hasattr(val, 'tab') and isinstance(val.tab, Tab):
+                        tab = val.tab
+                        break
+
+            if not tab:
+                logger.warning(
+                    f'debug_snapshot: Could not find a Tab instance for {func.__name__}. '
+                    'Snapshot will not be captured.'
+                )
+                return await func(*args, **kwargs)
+
+            # Start HAR recording
+            async with tab.request.record() as capture:
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as exc:
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    folder_name = f'{func.__name__}_{timestamp}'
+                    base_path = Path(save_dir) / folder_name
+                    base_path.mkdir(parents=True, exist_ok=True)
+
+                    logger.error(f'Function {func.__name__} failed. Capturing debug snapshot...')
+
+                    # 1. Save Page Snapshot (MHTML)
+                    try:
+                        await tab.save_page_snapshot(base_path / 'bundle.mhtml')
+                    except Exception as snap_exc:
+                        logger.error(f'Failed to save page snapshot: {snap_exc}')
+
+                    # 2. Save Network HAR
+                    try:
+                        capture.save(base_path / 'network.har')
+                    except Exception as har_exc:
+                        logger.error(f'Failed to save network HAR: {har_exc}')
+
+                    # 3. Save Traceback
+                    try:
+                        with open(base_path / 'traceback.log', 'w', encoding='utf-8') as f:
+                            f.write(traceback.format_exc())
+                    except Exception as log_exc:
+                        logger.error(f'Failed to save traceback log: {log_exc}')
+
+                    logger.info(f'Debug snapshot saved to {base_path}')
+                    raise exc
+
+        return wrapper
+
+    return decorator
 
 
 class RetryConfig:
