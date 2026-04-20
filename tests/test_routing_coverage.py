@@ -72,6 +72,7 @@ async def test_find_across_iframes_timeout_not_raise():
     
     loop = asyncio.get_event_loop()
     loop.time = fake_time
+    original_sleep = asyncio.sleep
     asyncio.sleep = fake_sleep
     
     try:
@@ -82,6 +83,7 @@ async def test_find_across_iframes_timeout_not_raise():
         assert res_none is None
     finally:
         loop.time = original_time
+        asyncio.sleep = original_sleep
 
 @pytest.mark.asyncio
 async def test_attempt_find_across_iframes_not_iframe():
