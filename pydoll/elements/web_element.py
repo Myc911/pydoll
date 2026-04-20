@@ -46,7 +46,6 @@ from pydoll.protocol.page.types import ScreenshotFormat, Viewport
 from pydoll.protocol.runtime.methods import (
     CallFunctionOnResponse,
     EvaluateResponse,
-    GetPropertiesResponse,
     SerializationOptions,
 )
 from pydoll.protocol.runtime.types import CallArgument

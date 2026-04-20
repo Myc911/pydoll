@@ -131,7 +131,7 @@ class ShadowRoot(FindElementsMixin):
         """
         logger.debug(f'Getting shadow siblings: tag_filter={tag_filter}, raise_exc={raise_exc}')
         if not self._host_element:
-            logger.warning('get_siblings_elements called on ShadowRoot without host_element reference')
+            logger.warning('get_siblings_elements called on ShadowRoot without host_element')
             return []
 
         siblings = await self._host_element.get_siblings_elements(
