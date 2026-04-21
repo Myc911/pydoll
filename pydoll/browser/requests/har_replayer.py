@@ -192,11 +192,14 @@ class HarReplayer:
         try:
             params = event.get('params') or {}
             request_id = params.get('requestId')
+            if not request_id:
+                return
+
             request = params.get('request') or {}
             url = request.get('url', '')
             method = str(request.get('method', 'GET')).upper()
 
-            if not request_id or not url:
+            if not url:
                 return
 
             match = self._index.get((method, url))
@@ -204,47 +207,60 @@ class HarReplayer:
                 await self._tab.continue_request(request_id)
                 return
 
-            response = match.get('response') or {}
-            content = response.get('content') or {}
-
-            status = int(response.get('status') or 200)
-            status_text = str(response.get('statusText') or 'OK')
-
-            body_text = str(content.get('text') or '')
-            encoding = content.get('encoding')
-            if encoding == 'base64':
-                body_b64 = body_text
-            else:
-                body_b64 = base64.b64encode(body_text.encode('utf-8')).decode('ascii')
-
-            headers: list[dict[str, str]] = []
-            for h in response.get('headers') or []:
-                try:
-                    name = h.get('name')
-                    value = h.get('value')
-                    if name and value is not None:
-                        headers.append({'name': str(name), 'value': str(value)})
-                except Exception:
-                    continue
-
-            if not any(h['name'].lower() == 'content-type' for h in headers):
-                mime_type = content.get('mimeType')
-                if mime_type:
-                    headers.append({'name': 'Content-Type', 'value': str(mime_type)})
-
-            await self._tab.fulfill_request(
-                request_id=request_id,
-                response_code=status,
-                response_headers=cast(Any, headers) if headers else None,
-                body=body_b64,
-                response_phrase=status_text,
-            )
+            await self._fulfill_from_match(request_id, match)
         except Exception as exc:
             logger.debug('HAR replayer: failed to replay paused request: %s', exc)
-            try:
-                params = event.get('params') or {}
-                request_id = params.get('requestId')
-                if request_id:
-                    await self._tab.continue_request(request_id)
-            except Exception:
-                return
+            await self._fallback_continue(event)
+
+    async def _fulfill_from_match(self, request_id: str, match: HarEntry) -> None:
+        """Prepare and send fulfillRequest command from a HAR entry."""
+        response = match.get('response') or {}
+        content = response.get('content') or {}
+
+        # Extract status and body
+        status = int(response.get('status') or 200)
+        status_text = str(response.get('statusText') or 'OK')
+        body_b64 = self._get_base64_body(content)
+
+        # Build headers
+        headers = self._get_response_headers(response, content)
+
+        await self._tab.fulfill_request(
+            request_id=request_id,
+            response_code=status,
+            response_headers=cast(Any, headers) if headers else None,
+            body=body_b64,
+            response_phrase=status_text,
+        )
+
+    def _get_base64_body(self, content: dict) -> str:
+        """Extract body text and encode as base64."""
+        body_text = str(content.get('text') or '')
+        if content.get('encoding') == 'base64':
+            return body_text
+        return base64.b64encode(body_text.encode('utf-8')).decode('ascii')
+
+    def _get_response_headers(self, response: dict, content: dict) -> list[dict[str, str]]:
+        """Consolidate headers from HAR response and content type."""
+        headers: list[dict[str, str]] = []
+        for h in response.get('headers') or []:
+            name = h.get('name')
+            value = h.get('value')
+            if name and value is not None:
+                headers.append({'name': str(name), 'value': str(value)})
+
+        if not any(h['name'].lower() == 'content-type' for h in headers):
+            mime_type = content.get('mimeType')
+            if mime_type:
+                headers.append({'name': 'Content-Type', 'value': str(mime_type)})
+        return headers
+
+    async def _fallback_continue(self, event: dict) -> None:
+        """Ensure the request is continued if fulfillment fails."""
+        try:
+            params = event.get('params') or {}
+            request_id = params.get('requestId')
+            if request_id:
+                await self._tab.continue_request(request_id)
+        except Exception:
+            pass

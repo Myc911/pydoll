@@ -4,7 +4,6 @@ from contextlib import suppress
 from pydoll.browser.interfaces import Options
 from pydoll.constants import PageLoadState
 from pydoll.exceptions import (
-    ArgumentAlreadyExistsInOptions,
     ArgumentNotFoundInOptions,
     WrongPrefsDict,
 )
