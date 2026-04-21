@@ -120,7 +120,7 @@ class ChromiumOptions(Options):
             ArgumentNotFoundInOptions: If the argument is not in the list of arguments.
         """
         if argument not in self._arguments:
-            raise ArgumentNotFoundInOptions(f'Argument not found: {argument}')
+            logger.debug(f'Argument not found: {argument}')
         self._arguments.remove(argument)
 
     @property

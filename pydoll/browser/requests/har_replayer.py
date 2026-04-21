@@ -233,14 +233,16 @@ class HarReplayer:
             response_phrase=status_text,
         )
 
-    def _get_base64_body(self, content: dict) -> str:
+    @staticmethod
+    def _get_base64_body(content: Any) -> str:
         """Extract body text and encode as base64."""
         body_text = str(content.get('text') or '')
         if content.get('encoding') == 'base64':
             return body_text
         return base64.b64encode(body_text.encode('utf-8')).decode('ascii')
 
-    def _get_response_headers(self, response: dict, content: dict) -> list[dict[str, str]]:
+    @staticmethod
+    def _get_response_headers(response: Any, content: Any) -> list[dict[str, str]]:
         """Consolidate headers from HAR response and content type."""
         headers: list[dict[str, str]] = []
         for h in response.get('headers') or []:
