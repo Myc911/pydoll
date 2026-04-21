@@ -114,6 +114,7 @@ if TYPE_CHECKING:
     from pydoll.protocol.page.events import FileChooserOpenedEvent
     from pydoll.protocol.page.methods import (
         CaptureScreenshotResponse,
+        CaptureSnapshotResponse,
         GetResourceContentResponse,
         GetResourceTreeResponse,
         NavigateResponse,
@@ -1138,7 +1139,7 @@ class Tab(FindElementsMixin):
             str: MHTML data string.
         """
         command = PageCommands.capture_snapshot()
-        response = await self._execute_command(command)
+        response: CaptureSnapshotResponse = await self._execute_command(command)
         return response['result']['data']
 
     async def save_page_snapshot(self, path: str | Path) -> None:

@@ -6,6 +6,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Coroutine, List, Optional, Type, TypeVar, Union
 
+from pydoll.browser.tab import Tab
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
@@ -34,30 +36,29 @@ def debug_snapshot(save_dir: Union[str, Path] = 'debug_snapshots'):
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             # Try to find a Tab instance in args or kwargs
-            from pydoll.browser.tab import Tab
-
             tab: Optional[Tab] = None
 
-            # Check args
+            # Helper to extract Tab from an object
+            def get_tab(obj: Any) -> Optional[Tab]:
+                if isinstance(obj, Tab):
+                    return obj
+                for attr in ("tab", "browser"):
+                    val = getattr(obj, attr, None)
+                    if isinstance(val, Tab):
+                        return val
+                return None
+
+            # Search in args first
             for arg in args:
-                if isinstance(arg, Tab):
-                    tab = arg
-                    break
-                if hasattr(arg, 'tab') and isinstance(arg.tab, Tab):
-                    tab = arg.tab
-                    break
-                if hasattr(arg, 'browser') and isinstance(arg.browser, Tab):
-                    tab = arg.browser
+                tab = get_tab(arg)
+                if tab:
                     break
 
-            # Check kwargs if not found in args
+            # Then search in kwargs
             if not tab:
                 for val in kwargs.values():
-                    if isinstance(val, Tab):
-                        tab = val
-                        break
-                    if hasattr(val, 'tab') and isinstance(val.tab, Tab):
-                        tab = val.tab
+                    tab = get_tab(val)
+                    if tab:
                         break
 
             if not tab:
